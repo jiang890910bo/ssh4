@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.2.xsd
+        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.2.xsd">
+
+    <!-- 引入数据库配置文件 -->
+    <context:property-placeholder location="classpath:config/properties/db.properties"/>
+
+    <!-- 配置DRUID 数据源 -->
+    <bean id="baseDataSource" class="com.alibaba.druid.pool.DruidDataSource" abstract="true">
+        <property name="filters" value="stat" />
+        <property name="maxActive" value="50" />
+        <property name="initialSize" value="3" />
+        <property name="maxWait" value="15000" />
+        <property name="minIdle" value="10" />
+        <property name="timeBetweenEvictionRunsMillis" value="60000" />
+        <property name="minEvictableIdleTimeMillis" value="300000" />
+        <property name="validationQuery" value="SELECT 'x'" />
+        <property name="testWhileIdle" value="true" />
+        <property name="testOnBorrow" value="false" />
+        <property name="testOnReturn" value="false" />
+    </bean>
+
+    <bean id="pmsDataSource" class="com.alibaba.druid.pool.DruidDataSource" parent="baseDataSource">
+        <property name="url">
+            <value>jdbc:mysql://${mysql.pms.db.serverport}/${mysql.pms.db.database}?useUnicode=true&amp;characterEncoding=UTF-8&amp;zeroDateTimeBehavior=convertToNull</value>
+        </property>
+        <property name="username">
+            <value>${mysql.pms.db.user}</value>
+        </property>
+        <property name="password">
+            <value>${mysql.pms.db.password}</value>
+        </property>
+    </bean>
+
+    <!-- 配置 SqlSessionFactory -->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <!-- 加载mybatis的配置文件 -->
+        <property name="configLocation" value="classpath:config/mybatis/SqlMapConfig.xml"/>
+        <!-- 加载数据源 -->
+        <property name="dataSource" ref="pmsDataSource"/>
+    </bean>
+
+    <!-- 通过MapperScannerConfigurer进行mapper扫描（建议使用）
+     mapper 批量扫描，从 mapper 包中扫描出 mapper 接口，自动创建代理对象，并在 spring 容器中注册名陈为类名首字母小写。
+     遵循的规范：将 mapper.java 和 mapper.xml 映射文件名陈一致，且在同一个目录
+     -->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <!-- 指定扫描的包，如果存在多个包使用(逗号,)分割 -->
+        <property name="basePackage" value="com.jiangbo.ssh4.mapper" />
+        <!-- 注意此处是sqlSessionFactoryBeanName，如果写成 sqlSessionFactory，ref="sqlSessionFactory"
+             会造成 <context:property-placeholder location="classpath:config/db.properties"/> 失效 而连接不上数据库
+         -->
+        <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory" />
+    </bean>
+
+    <context:component-scan base-package="com.jiangbo.ssh4"/>
+</beans>

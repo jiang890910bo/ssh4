@@ -1,1 +1,1 @@
-# ssh4
+Spring4+Mybatis+SpringMVC,配置spring嵌套事物控制、以及logback日志监控spring事物运行控制台输出、项目里复制了sql脚本.
